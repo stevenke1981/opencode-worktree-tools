@@ -4,6 +4,10 @@ import * as path from "node:path";
 
 export interface WorktreeConfig {
   worktreePath?: string;
+  /** If true (default), spawn a new terminal window. If false, try to open a tab in the current terminal. */
+  newTerminal: boolean;
+  /** If true (default), fork the parent session with full history. If false, create a fresh empty session. */
+  preserveHistory: boolean;
   sync: {
     copyFiles: string[];
     symlinkDirs: string[];
@@ -16,6 +20,8 @@ export interface WorktreeConfig {
 }
 
 const DEFAULT_CONFIG: WorktreeConfig = {
+  newTerminal: true,
+  preserveHistory: true,
   sync: { copyFiles: [], symlinkDirs: [], exclude: [] },
   hooks: { postCreate: [], preDelete: [] },
 };
@@ -26,6 +32,14 @@ const DEFAULT_CONFIG_TEMPLATE = `{
   // Custom base path for worktree storage (supports ~)
   // Default: ~/.local/share/opencode/worktree
   // "worktreePath": "~/my-worktrees",
+
+  // If true (default), open a new terminal window for the worktree.
+  // If false, attempt to open a tab in the current terminal (GNOME, Konsole, kitty).
+  // "newTerminal": true,
+
+  // If true (default), copy the parent session's conversation history into the worktree.
+  // If false, start with a fresh empty session (parentID is still linked for TUI navigation).
+  // "preserveHistory": true,
 
   "sync": {
     "copyFiles": [],
@@ -40,7 +54,7 @@ const DEFAULT_CONFIG_TEMPLATE = `{
 }
 `;
 
-/** Strip // and /* */ comments from JSONC (simple, sufficient for config files). */
+/** Strip // and /* comments from JSONC (simple, sufficient for config files). */
 function stripJsoncComments(text: string): string {
   let out = "";
   let i = 0;
@@ -104,6 +118,8 @@ function normalizeConfig(raw: unknown): WorktreeConfig {
   const hooks = (obj.hooks && typeof obj.hooks === "object" ? obj.hooks : {}) as Record<string, unknown>;
 
   const config: WorktreeConfig = {
+    newTerminal: obj.newTerminal !== false,
+    preserveHistory: obj.preserveHistory !== false,
     sync: {
       copyFiles: Array.isArray(sync.copyFiles) ? sync.copyFiles.filter((x) => typeof x === "string") : [],
       symlinkDirs: Array.isArray(sync.symlinkDirs) ? sync.symlinkDirs.filter((x) => typeof x === "string") : [],

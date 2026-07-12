@@ -20,6 +20,23 @@ Global OpenCode plugin for **isolated git worktrees** — rewritten from [openco
 | Commit | Quiet file-based commit on delete (no terminal noise) |
 | Tools | Added `worktreeList`; camelCase tool names matching git tools |
 | Windows | First-class Windows Terminal + cmd fallback |
+| **Guidance hooks** | **AI discovers plugin tools via injected context (see below)** |
+
+### Key Innovation: Guidance Hooks
+
+Unlike the original [opencode-worktree](https://github.com/kdcokenny/opencode-worktree), which registers plugin tools silently, this fork uses **three guidance hooks** to make the AI aware of the tools.
+
+**The problem:** Plugin tools registered via the `tool:` hook exist at runtime and execute correctly, but they don't appear in the LLM's static function definitions list — unlike MCP tools or `.opencode/tools/` custom tools. An AI agent has no way to discover them.
+
+**The solution:** Three hooks inject tool descriptions into the AI's conversation context:
+
+| Hook | What it does |
+|------|-------------|
+| `config.instructions` | Appends a note to every system prompt |
+| `experimental.chat.messages.transform` | Injects a detailed tool table into the first user message |
+| `experimental.session.compacting` | Re-injects guidance after long-context summarization |
+
+For full details, see [`docs/dev/guidance-hook.md`](docs/dev/guidance-hook.md).
 
 ## For humans — quick start
 

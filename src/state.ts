@@ -81,6 +81,15 @@ export function getAllSessions(db: Database): WorktreeSession[] {
     .all() as WorktreeSession[];
 }
 
+/** Look up a worktree session by its worktree path. */
+export function getSessionByPath(db: Database, path: string): WorktreeSession | null {
+  if (!path) return null;
+  const row = db
+    .prepare(`SELECT id, branch, path, created_at as createdAt FROM sessions WHERE path = $path`)
+    .get({ $path: path }) as WorktreeSession | null;
+  return row ?? null;
+}
+
 export function removeSession(db: Database, branch: string): void {
   if (!branch) return;
   db.prepare(`DELETE FROM sessions WHERE branch = $branch`).run({ $branch: branch });
